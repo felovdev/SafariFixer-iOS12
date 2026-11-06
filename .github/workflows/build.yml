@@ -1,4 +1,4 @@
-name: Build Safari Fixer
+name: Build and publish Safari Fixer APT repository
 
 on:
   push:
@@ -8,6 +8,12 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -37,16 +43,52 @@ jobs:
         run: |
           set -euo pipefail
           gmake clean package FINALPACKAGE=1
-          mkdir -p dist
           package="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
           test -n "$package"
+          mkdir -p dist site/debs
           cp "$package" dist/
+          cp "$package" site/debs/
           dpkg-deb --info "$package"
 
-      - name: Upload package
+      - name: Generate APT repository metadata
+        run: |
+          set -euo pipefail
+          cd site
+          dpkg-scanpackages -m . /dev/null > Packages
+          gzip -9 -k Packages
+          cat > Release <<'EOF'
+          Origin: felovdev
+          Label: Safari Fixer
+          Suite: stable
+          Codename: ios
+          Architectures: iphoneos-arm
+          Components: main
+          Description: Safari Fixer packages for jailbroken legacy iOS
+          EOF
+          test -s Packages
+          test -s Packages.gz
+          test -s debs/*.deb
+
+      - name: Upload installable package artifact
         uses: actions/upload-artifact@v4
         with:
           name: SafariFixer-iOS12-deb
           path: dist/*.deb
           if-no-files-found: error
           retention-days: 14
+
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: Upload APT repository site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publish APT repository to GitHub Pages
+        if: github.event_name != 'pull_request'
+        id: deployment
+        uses: actions/deploy-pages@v4
+
