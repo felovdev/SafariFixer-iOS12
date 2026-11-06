@@ -18,12 +18,12 @@
 
 Safari Fixer targets **MobileSafari on iOS 12**. The initial version adds a small page-level helper focused on:
 
-- 🎬 Retrying HTML5 video elements that report a media error when a page is restored from the back/forward cache.
+- 🎬 Retrying an HTML5 video element **once** after a network error when a page is restored or becomes visible again.
 - 📱 Adding inline-playback attributes to video elements that omit them.
 - 🔄 Handling video elements inserted dynamically after the initial page load.
 - 🧩 Providing a conservative foundation for site-specific compatibility fixes based on reproducible bugs.
 
-The tweak does not spoof the browser identity, aggressively rewrite websites, or automatically reload every embedded player.
+The tweak does not spoof the browser identity, aggressively rewrite websites, or automatically reload every embedded player. It deliberately does not retry decode/unsupported-format errors because repeated `load()` calls cannot add missing codec support.
 
 ## 🎯 Target configuration
 
@@ -46,16 +46,24 @@ A push to `main`, a pull request, or a manual workflow dispatch starts the build
 3. When it finishes, open **Artifacts** and download `SafariFixer-iOS12-deb`.
 4. Extract the ZIP to get the `.deb` package.
 
-A successful CI run confirms compilation and packaging only. It is not proof of runtime compatibility on a physical device.
+The workflow uses GNU Make, Theos, iOS SDK headers, and validates the resulting Debian package. A successful CI run confirms compilation and packaging only. It is not proof of runtime compatibility on a physical device.
 
-## 📲 Install
+## 📲 Install and remove
+
+Do not install an untested development build on your daily-use device.
 
 1. Transfer the `.deb` to the iPhone.
 2. Open it in Filza and install it.
 3. Respring or reboot if requested by the package manager.
-4. Test Safari using the same page that previously failed.
+4. Test Safari using a reproducible page that previously failed.
 
-Remove the tweak through your package manager if Safari becomes unstable. Keep a recovery method available before installing development builds.
+**Removal:** use Sileo (or another package manager), find **Safari Fixer**, then choose **Modify → Remove**. If using a terminal with package-management access, the package identifier is:
+
+```sh
+dpkg -r com.felovdev.safarifixer
+```
+
+Keep Sileo or another recovery route available before installing development builds. If Safari becomes unstable, remove the tweak rather than repeatedly reinstalling it.
 
 ## ⚠️ Compatibility limits
 
@@ -64,7 +72,7 @@ This project cannot turn iOS 12's old WebKit into a modern browser engine.
 - Changing the User-Agent cannot add missing JavaScript APIs, CSS features, or browser capabilities.
 - iOS Safari does not provide the Media Source Extensions (MSE) support needed by some JavaScript video players, including MSE-based playback paths used by libraries such as hls.js.
 - Native HLS playback may work, but codecs, containers, DRM, server behavior, and player implementation still matter.
-- Safari may discard a page's JavaScript/player state when a tab is closed or unloaded. Retrying an errored HTML5 video element can help in some cases, but cannot guarantee recovery of a third-party iframe or server-side playback session.
+- Safari may discard a page's JavaScript/player state when a tab is closed or unloaded. Retrying a network-failed HTML5 video element can help in limited cases, but cannot guarantee recovery of a third-party iframe or server-side playback session.
 - GitHub, Pinterest, Kodik, and other complex sites may remain partially or completely incompatible.
 
 **No universal website or video support is promised.** The Kodik restore issue still needs on-device reproduction and diagnosis.
@@ -98,6 +106,7 @@ Never include passwords, cookies, session tokens, or private account data.
 - [x] Theos project scaffold
 - [x] GitHub Actions packaging workflow
 - [x] Initial HTML5 video restore helper
+- [ ] Confirm CI build on GitHub Actions
 - [ ] Reproduce the Kodik restore error on iOS 12.5.8
 - [ ] Add narrowly-scoped fixes for confirmed player/site bugs
 - [ ] Test installation, stability, and removal on iPhone 5s + Chimera
