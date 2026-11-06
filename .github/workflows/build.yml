@@ -18,15 +18,17 @@ concurrency:
 jobs:
   build:
     name: Build rootful iOS package
-    runs-on: macos-14
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out source
         uses: actions/checkout@v4
 
       - name: Install build dependencies
         run: |
-          brew install make dpkg ldid xz
-          echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential clang git perl python3 curl ca-certificates \
+            ldid dpkg-dev fakeroot libssl-dev libplist-dev xz-utils
 
       - name: Install Theos and iOS SDKs
         run: |
@@ -42,7 +44,7 @@ jobs:
       - name: Build Debian package
         run: |
           set -euo pipefail
-          gmake clean package FINALPACKAGE=1
+          make clean package FINALPACKAGE=1
           package="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
           test -n "$package"
           mkdir -p dist site/debs
@@ -67,7 +69,7 @@ jobs:
           EOF
           test -s Packages
           test -s Packages.gz
-          test -s debs/*.deb
+          test -n "$(find debs -maxdepth 1 -type f -name '*.deb' -print -quit)"
 
       - name: Upload installable package artifact
         uses: actions/upload-artifact@v4
@@ -89,6 +91,4 @@ jobs:
 
       - name: Publish APT repository to GitHub Pages
         if: github.event_name != 'pull_request'
-        id: deployment
         uses: actions/deploy-pages@v4
-
