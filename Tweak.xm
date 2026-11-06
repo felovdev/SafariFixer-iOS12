@@ -21,13 +21,13 @@ static NSString * const SFFixerScript = @"
         }
     }
 
-    function restoreFailedVideos() {
+    function retryFailedVideos() {
         var videos = document.querySelectorAll('video');
         for (var i = 0; i < videos.length; i++) {
             var video = videos[i];
             prepareVideo(video);
-            // Retry only a video element that has a source and reports a media error.
-            // Do not reload the whole page or replace a third-party iframe.
+            // Retry only a source-backed element reporting a media error.
+            // Never reload the page or replace a third-party iframe.
             if (video.error && (video.currentSrc || video.src)) {
                 try { video.load(); } catch (e) {}
             }
@@ -47,7 +47,7 @@ static NSString * const SFFixerScript = @"
     }
 
     window.addEventListener('pageshow', function(event) {
-        if (event && event.persisted) window.setTimeout(restoreFailedVideos, 250);
+        if (event && event.persisted) window.setTimeout(retryFailedVideos, 250);
     }, false);
 })();
 ";
@@ -63,7 +63,7 @@ static NSString * const SFFixerScript = @"
                 forMainFrameOnly:NO];
             [configuration.userContentController addUserScript:script];
         } @catch (NSException *exception) {
-            NSLog(@"[SafariFixer] Could not install page helper: %@", exception);
+            NSLog(@"[SafariFixer] Failed to register page helper: %@", exception);
         }
     }
     return %orig(frame, configuration);

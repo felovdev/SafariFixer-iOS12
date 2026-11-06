@@ -17,17 +17,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Theos
-        uses: Randomblock1/theos-action@v1
-        with:
-          theos-dir: theos
-          theos-src: https://github.com/theos/theos
-          theos-sdks: https://github.com/theos/sdks
-          theos-sdks-branch: master
+      - name: Install build dependencies
+        run: |
+          brew update
+          brew install dpkg ldid xz
+
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$GITHUB_WORKSPACE/theos"
+          echo "THEOS=$GITHUB_WORKSPACE/theos" >> "$GITHUB_ENV"
+          git clone https://github.com/theos/sdks.git "$RUNNER_TEMP/theos-sdks"
+          mkdir -p "$GITHUB_WORKSPACE/theos/sdks"
+          cp -R "$RUNNER_TEMP/theos-sdks/"*.sdk "$GITHUB_WORKSPACE/theos/sdks/"
 
       - name: Build Debian package
         run: |
-          export THEOS="$GITHUB_WORKSPACE/theos"
           make clean package FINALPACKAGE=1
           mkdir -p dist
           cp packages/*.deb dist/

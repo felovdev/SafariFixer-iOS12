@@ -8,24 +8,24 @@
 [![iOS](https://img.shields.io/badge/iOS-12.0%2B-0A84FF?logo=apple&logoColor=white)](https://www.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-*A small jailbreak tweak project focused on making older Safari behave a little more reliably on today's web.*
+*An experimental jailbreak tweak to make legacy Safari a little more reliable on today's web.*
 
 </div>
 
 ---
 
-## ✨ What it aims to improve
+## ✨ Goals
 
-Safari Fixer is an experimental tweak for **MobileSafari on iOS 12**. It injects a lightweight compatibility script into WebKit pages and currently focuses on:
+Safari Fixer targets **MobileSafari on iOS 12**. The initial version adds a small page-level helper focused on:
 
-- 🎬 **Video recovery:** retry a failed HTML5 video element when Safari restores a page from its back/forward cache.
-- 📱 **Inline playback hints:** add `playsinline` to dynamically-created video elements where the site has not specified it.
-- 🔄 **Dynamic pages:** observe newly inserted video elements, not just the initial document.
-- 🧩 **Legacy Safari support:** provide a safe place to add narrowly-scoped compatibility workarounds as real site issues are reproduced.
+- 🎬 Retrying HTML5 video elements that report a media error when a page is restored from the back/forward cache.
+- 📱 Adding inline-playback attributes to video elements that omit them.
+- 🔄 Handling video elements inserted dynamically after the initial page load.
+- 🧩 Providing a conservative foundation for site-specific compatibility fixes based on reproducible bugs.
 
-These helpers are deliberately conservative. They do not rewrite every site's JavaScript, spoof the browser identity, or force-refresh every iframe.
+The tweak does not spoof the browser identity, aggressively rewrite websites, or automatically reload every embedded player.
 
-## 🎯 Target device
+## 🎯 Target configuration
 
 | Component | Target |
 |---|---|
@@ -33,47 +33,43 @@ These helpers are deliberately conservative. They do not rewrite every site's Ja
 | iOS | 12.5.8 |
 | Jailbreak | Chimera, rootful |
 | Browser | Apple Safari / MobileSafari |
-| Package | Debian `.deb`, rootful `iphoneos-arm` |
+| Package | Debian `.deb`, `iphoneos-arm` |
 
-The GitHub Actions workflow builds the package remotely with Theos. **You do not need Xcode or a local build environment.**
+Packages are built remotely with **Theos + GitHub Actions**. A local Xcode installation is not required.
 
 ## 📦 Build
 
-Every push to `main` and every pull request runs the build workflow.
+A push to `main`, a pull request, or a manual workflow dispatch starts the build.
 
 1. Open the [Actions tab](https://github.com/felovdev/SafariFixer-iOS12/actions).
 2. Select the latest **Build Safari Fixer** run.
-3. When it completes, open **Artifacts** and download `SafariFixer-iOS12-deb`.
-4. Extract the ZIP. It contains the `.deb` package.
+3. When it finishes, open **Artifacts** and download `SafariFixer-iOS12-deb`.
+4. Extract the ZIP to get the `.deb` package.
 
-A successful CI build only confirms that the package compiled. It does not prove that every website or video player works on-device.
+A successful CI run confirms compilation and packaging only. It is not proof of runtime compatibility on a physical device.
 
 ## 📲 Install
 
-1. Transfer the built `.deb` to the iPhone.
+1. Transfer the `.deb` to the iPhone.
 2. Open it in Filza and install it.
-3. Respring or reboot if the package manager requests it.
-4. Open Safari and test the same page again.
+3. Respring or reboot if requested by the package manager.
+4. Test Safari using the same page that previously failed.
 
-To uninstall, use the package manager that installed the tweak.
+Remove the tweak through your package manager if Safari becomes unstable. Keep a recovery method available before installing development builds.
 
-> **Important:** This is an early development build. Keep a way to remove the package (for example, Filza or your package manager) in case Safari crashes or behaves unexpectedly. Do not install it on a device you cannot recover.
+## ⚠️ Compatibility limits
 
-## ⚠️ Realistic compatibility limits
+This project cannot turn iOS 12's old WebKit into a modern browser engine.
 
-This tweak cannot turn iOS 12's old WebKit into a modern browser engine.
+- Changing the User-Agent cannot add missing JavaScript APIs, CSS features, or browser capabilities.
+- iOS Safari does not provide the Media Source Extensions (MSE) support needed by some JavaScript video players, including MSE-based playback paths used by libraries such as hls.js.
+- Native HLS playback may work, but codecs, containers, DRM, server behavior, and player implementation still matter.
+- Safari may discard a page's JavaScript/player state when a tab is closed or unloaded. Retrying an errored HTML5 video element can help in some cases, but cannot guarantee recovery of a third-party iframe or server-side playback session.
+- GitHub, Pinterest, Kodik, and other complex sites may remain partially or completely incompatible.
 
-- A User-Agent change cannot add missing JavaScript APIs, CSS features, or browser capabilities.
-- iOS Safari does not provide the Media Source Extensions (MSE) support required by some JavaScript video players (for example, an hls.js MSE playback path).
-- Native HLS playback may work, but codec, container, server, DRM, and player requirements still apply.
-- A page or iframe may lose its in-memory player state when Safari closes or unloads a tab. A retry can help some HTML5 video errors, but cannot guarantee restoration without reloading the player or page.
-- GitHub, Pinterest, and other complex sites may remain partially incompatible.
+**No universal website or video support is promised.** The Kodik restore issue still needs on-device reproduction and diagnosis.
 
-No universal site support is promised.
-
-## 🛠 Development
-
-The project uses [Theos](https://theos.dev/) and a GitHub Actions build workflow.
+## 🛠 Project layout
 
 ```
 .
@@ -82,30 +78,33 @@ The project uses [Theos](https://theos.dev/) and a GitHub Actions build workflow
 ├── Makefile
 ├── control
 ├── Tweak.xm
+├── LICENSE
 └── README.md
 ```
 
-For a reproducible bug report, include:
-- iOS version and device model;
-- the affected page URL (remove private tokens or account-specific query strings);
-- what you expected and what happened;
-- whether the issue also occurs after a fresh Safari launch;
-- for video, the player name and the exact error text.
+## 🐛 Bug reports
 
-Please do not include passwords, cookies, session tokens, or private account data.
+Please include:
+- device model, iOS version, and jailbreak;
+- the affected page URL (remove private tokens and account-specific query strings);
+- expected behavior and actual behavior;
+- whether it also happens after a fresh Safari launch;
+- for video issues, the player name and exact error message.
+
+Never include passwords, cookies, session tokens, or private account data.
 
 ## 🗺 Roadmap
 
 - [x] Theos project scaffold
-- [x] GitHub Actions package build
+- [x] GitHub Actions packaging workflow
 - [x] Initial HTML5 video restore helper
-- [ ] Reproduce and diagnose the reported Kodik restore error
-- [ ] Add narrowly-scoped site fixes only after testing
-- [ ] On-device testing on iOS 12.5.8 / Chimera
+- [ ] Reproduce the Kodik restore error on iOS 12.5.8
+- [ ] Add narrowly-scoped fixes for confirmed player/site bugs
+- [ ] Test installation, stability, and removal on iPhone 5s + Chimera
 
 ## 🤝 Contributing
 
-Bug reports and focused pull requests are welcome. Prefer a small, testable workaround over broad user-agent spoofing or aggressive page rewriting.
+Focused bug reports and pull requests are welcome. Prefer small, testable workarounds over broad User-Agent spoofing or aggressive page rewriting.
 
 ## 📄 License
 
