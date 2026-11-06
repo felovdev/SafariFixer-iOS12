@@ -1,0 +1,9 @@
+Package: com.felovdev.safarifixer
+Name: Safari Fixer
+Version: 0.1.0
+Architecture: iphoneos-arm
+Description: Conservative WebKit compatibility and HTML5 video restore helpers for legacy iOS Safari.
+Maintainer: felovdev
+Author: felovdev
+Section: Tweaks
+Depends: mobilesubstrate
