@@ -35,7 +35,7 @@ The tweak does not spoof the browser identity, aggressively rewrite websites, or
 | Browser | Apple Safari / MobileSafari |
 | Package | Debian `.deb`, `iphoneos-arm` |
 
-Packages are built remotely with **Theos + GitHub Actions**. A local Xcode installation is not required.
+Packages are built remotely with **Theos + GitHub Actions**. A local Xcode installation is not required. Successful builds also publish a basic APT repository for Sileo and other compatible package managers via GitHub Pages.
 
 ## 📦 Build
 
@@ -47,6 +47,22 @@ A push to `main`, a pull request, or a manual workflow dispatch starts the build
 4. Extract the ZIP to get the `.deb` package.
 
 The workflow uses GNU Make, Theos, iOS SDK headers, and validates the resulting Debian package. A successful CI run confirms compilation and packaging only. It is not proof of runtime compatibility on a physical device.
+
+## ➕ Add the repository to Sileo
+
+After the first successful publish, enable GitHub Pages once:
+
+1. Open **Settings → Pages** in this repository.
+2. Under **Build and deployment → Source**, select **GitHub Actions**.
+3. Wait for the **Build and publish Safari Fixer APT repository** workflow to finish successfully.
+
+Then add this source in Sileo:
+
+```
+https://felovdev.github.io/SafariFixer-iOS12/
+```
+
+In Sileo, open **Sources → +**, paste the URL, and add it. Search for **Safari Fixer** to install it. The source URL becomes usable only after GitHub Pages has been enabled and the workflow has successfully deployed; it is not the normal GitHub repository URL.
 
 ## 📲 Install and remove
 
